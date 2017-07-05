@@ -102,6 +102,7 @@ const Swipeout = React.createClass({
     left: PropTypes.array,
     onOpen: PropTypes.func,
     onClose: PropTypes.func,
+    onTouchRelease: PropTypes.func,
     right: PropTypes.array,
     scroll: PropTypes.func,
     style: View.propTypes.style,
@@ -146,7 +147,7 @@ const Swipeout = React.createClass({
       onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminate: this._handlePanResponderEnd,
+      onPanResponderTerminate: this._handlePanResponderTerminate,
       onShouldBlockNativeResponder: (event, gestureState) => false,
       onPanResponderTerminationRequest: () => false,
     });
@@ -159,7 +160,7 @@ const Swipeout = React.createClass({
   _handlePanResponderGrant: function(e: Object, gestureState: Object) {
     if (this.props.disabled) return;
     this.refs.swipeoutContent.measure((ox, oy, width, height) => {
-      let buttonWidth = this.props.buttonWidth || (width/5);
+      let buttonWidth = this.props.buttonWidth || (width/3);
       this.setState({
         btnWidth: buttonWidth,
         btnsLeftWidth: this.props.left ? buttonWidth*this.props.left.length : 0,
@@ -195,8 +196,16 @@ const Swipeout = React.createClass({
     }
   },
 
+  _handlePanResponderTerminate: function(e: Object, gestureState: Object) {
+    // this._close();
+
+    // //  Allow scroll
+    // if (this.props.scroll) this.props.scroll(true);
+  },
+
   _handlePanResponderEnd: function(e: Object, gestureState: Object) {
-    if (this.props.disabled) return;
+    const { sectionID, rowID, onTouchRelease, disabled } = this.props;
+    if (disabled) return;
     var posX = gestureState.dx;
     var contentPos = this.state.contentPos;
     var contentWidth = this.state.contentWidth;
@@ -204,7 +213,11 @@ const Swipeout = React.createClass({
     var btnsRightWidth = this.state.btnsRightWidth;
 
     //  minimum threshold to open swipeout
-    var openX = contentWidth*0.33;
+    var openX = contentWidth*0.4;
+    if (onTouchRelease) {
+      console.log(`Calling onTouchRelease with posX: ${posX} and contentWidth: ${openX}`)
+      onTouchRelease(sectionID, rowID, posX >= openX, posX <= -openX)
+    }
 
     //  should open swipeout
     var openLeft = posX > openX || posX > btnsLeftWidth/2;
