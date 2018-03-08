@@ -147,7 +147,6 @@ const Swipeout = React.createClass({
       onPanResponderGrant: this._handlePanResponderGrant,
       onPanResponderMove: this._handlePanResponderMove,
       onPanResponderRelease: this._handlePanResponderEnd,
-      onPanResponderTerminate: this._handlePanResponderTerminate,
       onShouldBlockNativeResponder: (event, gestureState) => false,
       onPanResponderTerminationRequest: () => false,
     });
@@ -196,13 +195,6 @@ const Swipeout = React.createClass({
     }
   },
 
-  _handlePanResponderTerminate: function(e: Object, gestureState: Object) {
-    // this._close();
-
-    // //  Allow scroll
-    // if (this.props.scroll) this.props.scroll(true);
-  },
-
   _handlePanResponderEnd: function(e: Object, gestureState: Object) {
     const { sectionID, rowID, onTouchRelease, disabled } = this.props;
     if (disabled) return;
@@ -214,24 +206,20 @@ const Swipeout = React.createClass({
 
     //  minimum threshold to open swipeout
     var openX = contentWidth*0.4;
-    if (onTouchRelease) {
-      console.log(`Calling onTouchRelease with posX: ${posX} and contentWidth: ${openX}`)
-      onTouchRelease(sectionID, rowID, posX >= openX, posX <= -openX)
-    }
 
     //  should open swipeout
-    var openLeft = posX > openX || posX > btnsLeftWidth/2;
-    var openRight = posX < -openX || posX < -btnsRightWidth/2;
+    let openLeft = posX > openX || posX > btnsLeftWidth/2;
+    let openRight = posX < -openX || posX < -btnsRightWidth/2;
 
     //  account for open swipeouts
-    if (this.state.openedRight) var openRight = posX-openX < -openX;
-    if (this.state.openedLeft) var openLeft = posX+openX > openX;
+    if (this.state.openedRight) openRight = posX-openX < -openX;
+    if (this.state.openedLeft) openLeft = posX+openX > openX;
 
     //  reveal swipeout on quick swipe
     var timeDiff = (new Date()).getTime() - this.state.timeStart < 200;
     if (timeDiff) {
-      var openRight = posX < -openX/10 && !this.state.openedLeft;
-      var openLeft = posX > openX/10 && !this.state.openedRight;
+      openRight = posX < -openX/10 && !this.state.openedLeft;
+      openLeft = posX > openX/10 && !this.state.openedRight;
     }
 
     if (this.state.swiping) {
@@ -241,6 +229,9 @@ const Swipeout = React.createClass({
         this._open(btnsLeftWidth, 'left');
       } else {
         this._close();
+      }
+      if (onTouchRelease) {
+        onTouchRelease(sectionID, rowID, openLeft, openRight)
       }
     }
 
