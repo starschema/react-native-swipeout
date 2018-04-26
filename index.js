@@ -98,6 +98,8 @@ const Swipeout = React.createClass({
   propTypes: {
     autoClose: PropTypes.bool,
     backgroundColor: PropTypes.string,
+    leftBackgroundColor: PropTypes.string,
+    rightBackgroundColor: PropTypes.string,
     close: PropTypes.bool,
     left: PropTypes.array,
     onOpen: PropTypes.func,
@@ -133,6 +135,7 @@ const Swipeout = React.createClass({
       swiping: false,
       tweenDuration: 160,
       timeStart: null,
+      bgColor: this.props.backgroundColor,
     };
   },
 
@@ -171,6 +174,7 @@ const Swipeout = React.createClass({
   },
 
   _handlePanResponderMove: function(e: Object, gestureState: Object) {
+    const { leftBackgroundColor, rightBackgroundColor } = this.props;
     if (this.props.disabled) return;
     var posX = gestureState.dx;
     var posY = gestureState.dy;
@@ -182,8 +186,21 @@ const Swipeout = React.createClass({
     //  prevent scroll if moveX is true
     var moveX = Math.abs(posX) > Math.abs(posY);
     if (this.props.scroll) {
-      if (moveX) this.props.scroll(false);
-      else this.props.scroll(true);
+      let direction = 'neutral';
+      if (posX < 0) {
+        direction = 'right';
+        if (rightBackgroundColor) {
+          this.setState({ bgColor: rightBackgroundColor });
+        }
+      }
+      if (posX > 0) {
+        direction = 'left';
+        if (leftBackgroundColor) {
+          this.setState({ bgColor: leftBackgroundColor });
+        }
+      }
+      if (moveX) this.props.scroll(false, direction);
+      else this.props.scroll(true, direction);
     }
     if (this.state.swiping) {
       //  move content to reveal swipeout
@@ -236,7 +253,7 @@ const Swipeout = React.createClass({
     }
 
     //  Allow scroll
-    if (this.props.scroll) this.props.scroll(true);
+    if (this.props.scroll) this.props.scroll(true, 'neutral');
   },
 
   _tweenContent: function(state, endValue) {
@@ -292,8 +309,8 @@ const Swipeout = React.createClass({
     var posX = this.getTweeningValue('contentPos');
 
     var styleSwipeout = [styles.swipeout, this.props.style];
-    if (this.props.backgroundColor) {
-      styleSwipeout.push([{ backgroundColor: this.props.backgroundColor }]);
+    if (this.state.bgColor) {
+      styleSwipeout.push([{ backgroundColor: this.state.bgColor }]);
     }
 
     var limit = -this.state.btnsRightWidth;
